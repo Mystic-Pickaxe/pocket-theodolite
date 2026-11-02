@@ -195,6 +195,11 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
 #sensorErr b{font:700 20px var(--f-disp);color:#ffc1b9}
 #sensorErr p{font-size:15px}
 #sensorErr .fine{font:400 12px var(--f-num);color:var(--mute);overflow-wrap:anywhere}
+#distHint{background:rgba(255,181,71,.25);border:1px solid rgba(255,181,71,.6);margin-top:4px}
+#distHint.good{background:rgba(127,220,149,.2);border-color:rgba(127,220,149,.6)}
+.tries{display:grid;gap:6px}
+.tries div{display:flex;justify-content:space-between;font:600 14px var(--f-num);padding:6px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.tries span{color:var(--mute);font-family:var(--f-ui);font-weight:500}
 #flash.ok{border-color:var(--good);background:rgba(10,20,12,.88)}
 #sheet{position:absolute;inset:0;background:var(--bg);color:var(--text);overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(16px,env(safe-area-inset-left,0px))}
 #sheet .wrap{padding-top:0}
@@ -510,6 +515,7 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
       <div id="angDir">Waiting for the sensor</div>
       <div class="steady"><div class="bar"><i id="steadyBar"></i></div><span id="steadyTxt">–</span></div>
       <div class="fine" id="srcTxt" style="color:rgba(255,255,255,.55)"></div>
+      <div class="pill" id="distHint" hidden></div>
     </div>
   </div>
   <div id="flash" hidden></div>
@@ -531,10 +537,13 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
   </div>
   <div id="sheet" hidden><div class="wrap">
     <div class="hud-row"><div class="eyebrow">Your answer</div><button class="btn ghost" id="sheetDone">Close</button></div>
+    <div id="sheetAvg" class="panel" hidden></div>
     <div id="sheetOut" class="panel"></div>
     <div class="panel">
       <div class="field"><label for="saveName">What did you measure?</label><div class="inp"><input id="saveName" type="text" placeholder="e.g. Office tower" style="font:500 16px var(--f-ui)"></div></div>
-      <div class="row"><button class="btn primary" id="saveBtn" style="flex:1">Save</button><button class="btn" id="againBtn" style="flex:1">Measure again</button></div>
+      <div class="row"><button class="btn primary" id="saveBtn" style="flex:1">Save</button><button class="btn" id="againBtn" style="flex:1">Add another try</button></div>
+      <button class="btn ghost" id="freshBtn">Start fresh (forget these tries)</button>
+      <p class="fine">Tip: do 3 to 5 tries and use the average. Random wobbles cancel out a bit each time.</p>
     </div>
   </div></div>
 </div>
@@ -839,7 +848,7 @@ $('#cal1').onclick=()=>calRecord(0);$('#cal2').onclick=()=>calRecord(1);
 $('#calReset').onclick=()=>{cal=null;calTmp=[];store.set('cal2',null);$('#cal2').disabled=true;calText()};
 
 /* ---------- camera ---------- */
-const cam={stream:null,track:null,wake:null,step:0,cap:{},busy:false,raf:0,params:null};
+const cam={stream:null,track:null,wake:null,step:0,cap:{},busy:false,raf:0,params:null,runs:[]};
 // a wall object with a known distance doesn't need the floor aim
 const steps=()=>mode==='wall'&&cam.params&&cam.params.d>0?MODES.wall.steps.slice(1):MODES[mode].steps;
 $('#startBtn').onclick=async()=>{
@@ -851,7 +860,7 @@ $('#startBtn').onclick=async()=>{
   if(mode==='pair'&&!(p.s>0))return setupMsg('Fill in how far you\'ll walk back.');
   store.set('h0',$('#h0').value);
   await askMotionPermission();
-  cam.params=p;
+  cam.params=p;cam.runs=[];$('#saveName').value='';
   // the camera opens no matter what; a sensor problem is shown on top of it
   await openCamera();
   cam.step=0;cam.cap={};$('#sheet').hidden=true;renderStep();
@@ -911,8 +920,24 @@ function renderStep(){
 }
 let flashT=0;
 function flash(t,ok){const f=$('#flash');f.textContent=t;f.hidden=false;f.classList.toggle('ok',!!ok);clearTimeout(flashT);flashT=setTimeout(()=>f.hidden=true,ok?1400:3800)}
+const LOCK_MS=1200;
+// drop the 10% highest and lowest readings so a single jolt can't pull the average
+function trimmedMean(xs){const s=[...xs].sort((a,b)=>a-b),k=Math.floor(s.length*0.1);return mean(s.slice(k,s.length-k))}
+// where you're standing decides how much tan magnifies small errors
+function distanceHint(e){
+  const st=steps()[cam.step];if(!st||e==null)return '';
+  if(st.k==='dep'){
+    const a=-e;if(a<0)return '';
+    const lo=mode==='wall'?20:15,hi=mode==='wall'?55:50;
+    return a<lo?'Move closer for a better answer':a>hi?'Step back a little':'Good distance ✓';
+  }
+  if(st.k==='top'||st.k==='a1'){if(e>75)return 'Too steep, step back';if(mode==='dist'&&e<25&&e>0)return 'You could move closer';return e>0?'Good distance ✓':''}
+  return '';
+}
 function hud(){
   if($('#vf').hidden)return;
+  const dh=$('#distHint'),txt=distanceHint(S.ema);
+  dh.hidden=!txt;dh.textContent=txt;dh.classList.toggle('good',txt.endsWith('✓'));
   const now=performance.now();
   if(S.ema!=null&&now-S.last<1500){
     $('#ang').textContent=f1(Math.abs(S.ema))+'°';
@@ -929,13 +954,21 @@ function hud(){
 $('#shoot').onclick=async()=>{
   if(cam.busy||!$('#sheet').hidden)return;
   if(!attached)return flash('The tilt sensor isn\'t working yet, so the angle can\'t be measured.');
-  cam.busy=true;const btn=$('#shoot');btn.classList.add('hold');
-  // wait for the tap wobble to die down, then average 1.5 s of readings (like a real clinometer's lock)
-  await sleep(500);const t0=performance.now();await sleep(1500);
-  btn.classList.remove('hold');cam.busy=false;
-  const xs=S.raw.filter(r=>r[0]>=t0).map(r=>r[1]);
-  if(xs.length<4)return flash('The sensor didn\'t send anything. Move the phone a bit and try again.');
-  const m=mean(xs),sd=std(xs);
+  cam.busy=true;const btn=$('#shoot');btn.classList.add('hold');$('#stepHint').textContent='Hold still… locking on';
+  // like a real clinometer's auto-lock: after the tap wobble, keep the steadiest 1.2 s seen in the next few seconds
+  await sleep(400);
+  const t0=performance.now();let best=null;
+  while(performance.now()-t0<5000){
+    await sleep(100);
+    const now=performance.now();if(now-t0<LOCK_MS)continue;
+    const w=S.raw.filter(r=>r[0]>=now-LOCK_MS).map(r=>r[1]);
+    if(w.length<8)continue;
+    const s=std(w);if(!best||s<best.sd)best={sd:s,xs:w};
+    if(s<0.12)break;
+  }
+  btn.classList.remove('hold');cam.busy=false;renderStep();
+  if(!best)return flash('The sensor didn\'t send anything. Move the phone a bit and try again.');
+  const m=trimmedMean(best.xs),sd=best.sd;
   if(sd>0.5)return flash(`Too shaky (±${f1(sd)}°). Tuck your elbows in and try again.`);
   const st=steps()[cam.step],val=st.k==='dep'?-m:m;
   if(st.k==='dep'&&!(val>0.2))return flash('That\'s above eye level. The floor/bottom should be lower than your eye, so aim lower.');
@@ -960,15 +993,35 @@ function finish(){
   const floor=calibrated()?0.25:1,ang={},sig={};
   for(const [k,v] of Object.entries(cam.cap)){ang[k]=v.v;sig[k]=Math.sqrt(v.sd**2+floor**2)}
   lastSol=solve(mode,{...cam.params,ang,sig});
+  if(lastSol.ok)cam.runs.push({H:lastSol.H,err:lastSol.err,d:lastSol.d});
   renderSolution($('#sheetOut'),lastSol,'camera');
-  $('#saveName').value='';$('#saveBtn').disabled=!lastSol.ok;$('#saveBtn').textContent='Save';
+  renderAvg();
+  $('#saveBtn').disabled=!lastSol.ok;$('#saveBtn').textContent=cam.runs.length>1?`Save the average of ${cam.runs.length}`:'Save';
   $('#sheet').hidden=false;$('#sheet').scrollTop=0;
 }
+// several tries → mean and spread
+function runStats(){
+  const r=cam.runs,n=r.length,Hs=r.map(x=>x.H),H=mean(Hs),sd=n>1?std(Hs):0;
+  const err=Math.max(sd,mean(r.map(x=>x.err)))/Math.sqrt(n);
+  return {n,H,sd,err,d:mean(r.map(x=>x.d))};
+}
+function renderAvg(){
+  const el=$('#sheetAvg'),r=cam.runs;
+  el.hidden=r.length<2;if(el.hidden)return;
+  const st=runStats(),cm=mode==='wall'&&st.H<1,u=v=>cm?`${(v*100).toFixed(1)} cm`:`${f2(v)} m`;
+  el.innerHTML=`<div class="eyebrow">Average of ${st.n} tries</div>
+    <div class="res-head"><div class="res-big num">${cm?(st.H*100).toFixed(1):f2(st.H)}<span>${cm?'cm':'m'}</span></div><div class="res-err">± ${u(st.err)}</div></div>
+    <div class="tries">${r.map((x,i)=>`<div><span>Try ${i+1}</span>${u(x.H)}</div>`).join('')}</div>
+    <p class="fine">Mean = (sum of tries) ÷ ${st.n}. The tries differ from each other by about ${u(st.sd)}. Averaging ${st.n} tries makes the ± about √${st.n} ≈ ${Math.sqrt(st.n).toFixed(1)} times smaller than a single try.</p>`;
+}
 $('#againBtn').onclick=()=>{cam.step=0;cam.cap={};$('#sheet').hidden=true;renderStep()};
+$('#freshBtn').onclick=()=>{cam.runs=[];cam.step=0;cam.cap={};$('#saveName').value='';$('#sheet').hidden=true;renderStep()};
 $('#sheetDone').onclick=closeVF;
 $('#saveBtn').onclick=()=>{
   if(!lastSol||!lastSol.ok)return;
-  const h=store.get('hist',[]);h.unshift({t:Date.now(),name:$('#saveName').value.trim()||(mode==='wall'?'Something on a wall':'Something tall'),H:lastSol.H,err:lastSol.err,d:lastSol.d,mode});
+  const st=cam.runs.length>1?runStats():{H:lastSol.H,err:lastSol.err,d:lastSol.d,n:1};
+  const nm=$('#saveName').value.trim()||(mode==='wall'?'Something on a wall':'Something tall');
+  const h=store.get('hist',[]);h.unshift({t:Date.now(),name:st.n>1?`${nm} (avg of ${st.n})`:nm,H:st.H,err:st.err,d:st.d,mode});
   store.set('hist',h.slice(0,30));renderHist();$('#saveBtn').disabled=true;$('#saveBtn').textContent='Saved ✓';
 };
 function renderHist(){
