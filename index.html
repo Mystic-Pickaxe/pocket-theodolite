@@ -77,7 +77,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .mode .ic-c{stroke:var(--cyan);stroke-width:1.8;fill:none;stroke-dasharray:3 2}
 .mode .ic-b{fill:#2b3640;stroke:#55687a}
 
-.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
 .seg button{background:none;border:0;border-radius:9px;padding:9px 4px;color:var(--mute);font-weight:600;font-size:14px;line-height:1.2}
 .seg button[aria-pressed="true"]{background:var(--raise);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
 
@@ -268,13 +268,19 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
           <svg viewBox="0 0 64 44" aria-hidden="true"><line class="ic-l" x1="2" y1="40" x2="62" y2="40"/><rect class="ic-b" x="48" y="6" width="10" height="34"/><line class="ic-s" x1="4" y1="30" x2="48" y2="6"/><line class="ic-s" x1="22" y1="30" x2="48" y2="6"/><line class="ic-l" x1="4" y1="40" x2="4" y2="30"/><line class="ic-l" x1="22" y1="40" x2="22" y2="30"/></svg>
           <div><b>Two spots</b><span>Can't see the bottom? Aim at the top, walk back, aim again.</span></div>
         </button>
+        <button class="mode" data-mode="wall" aria-pressed="false">
+          <svg viewBox="0 0 64 44" aria-hidden="true"><line class="ic-l" x1="2" y1="40" x2="62" y2="40"/><line class="ic-l" x1="52" y1="4" x2="52" y2="40"/><rect class="ic-b" x="46" y="12" width="6" height="12"/><line class="ic-s" x1="8" y1="28" x2="46" y2="12"/><line class="ic-s" x1="8" y1="28" x2="46" y2="24"/><line class="ic-c" x1="8" y1="28" x2="52" y2="40"/><line class="ic-l" x1="8" y1="40" x2="8" y2="28"/></svg>
+          <div><b>Thing on a wall</b><span>A calendar, poster, window or flag. Aim at the floor, then its bottom and top.</span></div>
+        </button>
       </div>
       <div class="stepno"><span>2</span>Fill this in</div>
       <div class="fields">
         <div class="field"><label for="h0">Your eye height (hold the phone here)</label><div class="inp"><input id="h0" type="number" inputmode="decimal" step="0.01" min="0.1" value="1.50"><span>m</span></div></div>
         <div class="field" data-for="dist"><label for="dIn">Distance to the building</label><div class="inp"><input id="dIn" type="number" inputmode="decimal" step="0.1" min="0.1" value="20"><span>m</span></div></div>
         <div class="field" data-for="pair"><label for="sIn">How far you'll walk back</label><div class="inp"><input id="sIn" type="number" inputmode="decimal" step="0.1" min="0.1" value="10"><span>m</span></div></div>
+        <div class="field" data-for="wall"><label for="wIn">Distance to the wall (optional)</label><div class="inp"><input id="wIn" type="number" inputmode="decimal" step="0.01" min="0.1" placeholder="skip"><span>m</span></div></div>
       </div>
+      <p class="fine" data-for="wall">Leave the distance empty and the app finds it by aiming at the floor first. If you measured it with a tape, fill it in for a better answer.</p>
       <div class="stepno"><span>3</span>Point and tap</div>
       <div id="setupMsg" class="msg" hidden></div>
       <button class="btn primary" id="startBtn">Open camera</button>
@@ -283,16 +289,16 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
 
     <div class="panel">
       <div class="calib">
-        <div><b>Calibrate the sensor</b><span id="calStat">Not done yet. Takes 10 seconds and makes the answer more accurate.</span></div>
+        <div><b>Calibrate the sensor</b><span id="calStat">Not done yet. Do this once, it fixes the biggest error.</span></div>
         <button class="btn" id="calBtn">Calibrate</button>
       </div>
       <div id="calPanel" hidden style="display:grid;gap:10px">
         <ol class="tips">
-          <li>Put your phone <b>flat on a table</b>, screen up. Don't touch it. Tap <b>Record 1</b>.</li>
-          <li><b>Turn the phone around</b> (180°) on the same spot, still flat. Tap <b>Record 2</b>.</li>
+          <li>Press the <b>back of your phone flat against a wall</b> (camera facing the wall), standing up straight. Tap <b>Record 1</b> and hold it there until it beeps.</li>
+          <li>Tap <b>Record 2</b>, then within 3 seconds press the <b>screen flat against the same spot</b> on the wall. Hold it until it beeps.</li>
         </ol>
         <div class="row"><button class="btn" id="cal1">Record 1</button><button class="btn" id="cal2" disabled>Record 2</button><button class="btn ghost" id="calReset">Reset</button></div>
-        <p class="fine">Why turn it around? If the table is slightly tilted, that tilt flips when you turn the phone, so it cancels out. What's left is the sensor's own error, and the app removes that from every reading.</p>
+        <p class="fine">Why a wall? When you measure, the phone is standing up, so that's how it needs to be checked. Why flip it? If the wall leans a tiny bit, flipping the phone makes that lean count once as "up" and once as "down", so it cancels out. Whatever's left is the sensor's own error, and the app subtracts it from every reading. If your phone has a big camera bump, keep its case on so the back sits flat.</p>
       </div>
     </div>
 
@@ -312,6 +318,7 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
         <button data-mode="base" aria-pressed="true">No tape</button>
         <button data-mode="dist" aria-pressed="false">Know distance</button>
         <button data-mode="pair" aria-pressed="false">Two spots</button>
+        <button data-mode="wall" aria-pressed="false">On a wall</button>
       </div>
       <div class="fields">
         <div class="field"><label for="c-h0">Eye height (EB)</label><div class="inp"><input id="c-h0" type="number" inputmode="decimal" step="0.01" value="1.5"><span>m</span></div></div>
@@ -322,7 +329,11 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
         <div class="field" data-cfor="pair"><label for="c-s">Distance walked back (s)</label><div class="inp"><input id="c-s" type="number" inputmode="decimal" step="0.1" value="20"><span>m</span></div></div>
         <div class="field" data-cfor="pair"><label for="c-a1">Angle from the near spot (θ₁)</label><div class="inp"><input id="c-a1" type="number" inputmode="decimal" step="0.1" value="60"><span>°</span></div></div>
         <div class="field" data-cfor="pair"><label for="c-a2">Angle from the far spot (θ₂)</label><div class="inp"><input id="c-a2" type="number" inputmode="decimal" step="0.1" value="30"><span>°</span></div></div>
+        <div class="field" data-cfor="wall"><label for="c-wd">Distance from the wall (DE)</label><div class="inp"><input id="c-wd" type="number" inputmode="decimal" step="0.01" value="3"><span>m</span></div></div>
+        <div class="field" data-cfor="wall"><label for="c-wb">Angle to the bottom (θ₁)</label><div class="inp"><input id="c-wb" type="number" inputmode="decimal" step="0.1" value="5"><span>°</span></div></div>
+        <div class="field" data-cfor="wall"><label for="c-wt">Angle to the top (θ₂)</label><div class="inp"><input id="c-wt" type="number" inputmode="decimal" step="0.1" value="16"><span>°</span></div></div>
       </div>
+      <p class="fine" data-cfor="wall">If a point is below your eye, type its angle as negative (e.g. −8°).</p>
     </div>
     <div class="panel" id="calcOut"></div>
   </section>
@@ -433,17 +444,36 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
     </div>
 
     <div class="panel">
+      <div class="eyebrow">Way 4 · Thing on a wall</div>
+      <h3>Calendars, posters, windows, flags</h3>
+      <p>Here you measure the angle to the bottom and to the top of the thing. Let P be the bottom of the calendar and Q its top. E is the point on the wall at my eye level, so DE is my distance from the wall.</p>
+      <div class="math">
+        <span class="c">In right ΔDEP,</span><br>
+        tan θ₁ = EP / DE ⇒ EP = DE tan θ₁<br>
+        <span class="c">In right ΔDEQ,</span><br>
+        tan θ₂ = EQ / DE ⇒ EQ = DE tan θ₂<br>
+        <span class="c">Height of the calendar,</span><br>
+        <span class="r">PQ = EQ − EP = DE (tan θ₂ − tan θ₁)</span>
+      </div>
+      <p>If DE isn't known, the app first aims at the floor below the calendar (call it F) and uses tan α = EF / DE = h / DE, the same way as Way 1.</p>
+      <p class="callout">If a point is below my eye, its angle is a depression, so I count it as negative. Then EP comes out negative too, which just means P is below E, and PQ = EQ − EP still works.</p>
+    </div>
+
+    <div class="panel">
       <div class="eyebrow">Behind the scenes</div>
       <h3>How does the phone know the angle?</h3>
       <p>Every phone has a tiny sensor called an accelerometer that feels which way gravity is pulling, kind of like the bubble in a spirit level. From that, the phone knows exactly how much it's tilted. When you aim the camera at something, that tilt is the angle of elevation (looking up) or depression (looking down).</p>
-      <p>Each time you tap, the app waits a moment so your tap doesn't shake the phone, then takes around 50 readings and averages them. If your hand was too shaky, it asks you to try again.</p>
+      <p>Each time you tap, the app waits half a second so your tap doesn't shake the phone, then averages 1.5 seconds of readings (usually 60 to 90 of them). If your hand was too shaky, it asks you to try again. I got this idea from an open-source app called Basic Air Data Clinometer, which only locks a reading once the phone is steady.</p>
+      <p>Calibration works like a surveyor's trick called reversal. The phone's sensor is usually off by about half a degree to 2 degrees. The app measures with the back on a wall and then with the screen on the same spot. The wall's lean shows up once as plus and once as minus, so averaging the two cancels it. What's left is the sensor's own error, which then gets subtracted from every reading.</p>
     </div>
 
     <div class="panel">
       <div class="eyebrow">Tips</div>
       <h3>Getting a good answer</h3>
       <ul class="tips">
-        <li><b>Calibrate first.</b> Most phone sensors are off by 0.5° to 2° from the factory.</li>
+        <li><b>Calibrate first.</b> Most phone sensors are off by 0.5° to 2° from the factory. That's the biggest source of error.</li>
+        <li><b>Don't stand too far away.</b> If the angle to the bottom is tiny (under about 8°), even a small error changes the answer a lot. The app warns you when that happens.</li>
+        <li><b>For small things like a calendar,</b> stand 1.5 to 3 m from the wall, and between aims just tilt the phone without moving it up or down.</li>
         <li><b>Measure your eye height properly.</b> In "No tape" mode the whole answer depends on it.</li>
         <li><b>Stand about as far away as the building is tall.</b> Angles around 45° give the least error. Very steep or very flat angles make small mistakes bigger.</li>
         <li><b>Tuck your elbows in</b> to keep the phone steady.</li>
@@ -542,8 +572,9 @@ const MODES={
   base:{steps:[{k:'dep',t:'Aim at the bottom',h:'Put the dot right where the building touches the ground, then tap.'},{k:'top',t:'Now aim at the very top',h:'Put the dot on the highest point and tap.'}]},
   dist:{steps:[{k:'top',t:'Aim at the very top',h:'Put the dot on the highest point and tap.'}]},
   pair:{steps:[{k:'a1',t:'Spot 1: aim at the top',h:'Stand closer to the building first, then tap.'},{k:'a2',t:'Spot 2: aim at the top',h:'Walk straight back S m (stay in line with the building), then tap again.'}]},
+  wall:{steps:[{k:'dep',t:'Aim at the floor by the wall',h:'Put the dot where the wall meets the floor, right below the thing.'},{k:'b1',t:'Aim at its bottom edge',h:'Tilt the phone, don\'t move it up or down. Then tap.'},{k:'t1',t:'Aim at its top edge',h:'Same spot, just tilt. Then tap.'}]},
 };
-const SYM={dep:'α',top:'θ',a1:'θ₁',a2:'θ₂'};
+const SYM={dep:'α',top:'θ',a1:'θ₁',a2:'θ₂',b1:'θ₁',t1:'θ₂'};
 
 /* ---------- solver (same maths for camera and calculator) ---------- */
 function solve(mode,p){
@@ -561,17 +592,34 @@ function solve(mode,p){
     if(!(p.d>0))return bad('Fill in the distance DE.');
     if(!(a.top>-89&&a.top<89.5))return bad('The angle θ has to be less than 90°.');
     f=x=>({d:p.d,H:h+p.d*T(x.top)});
-  }else{
+  }else if(mode==='pair'){
     keys=['a1','a2'];
     if(!(p.s>0))return bad('Fill in how far you walked back (s).');
     if(!(a.a2>0&&a.a1<89.5))return bad('Both angles have to be between 0° and 90°.');
     if(!(a.a1>a.a2))return bad('θ₁ (near spot) has to be bigger than θ₂ (far spot). When you walk back, the top looks lower.');
     f=x=>{const t1=T(x.a1),t2=T(x.a2),d=p.s*t2/(t1-t2);return {d,H:h+d*t1}};
+  }else{
+    // thing on a wall: P is its bottom, Q its top; angles below eye level are negative
+    const known=p.d>0;
+    keys=known?['b1','t1']:['dep','b1','t1'];
+    if(!known&&!(h>0))return bad('Fill in your eye height, or the distance to the wall.');
+    if(!known&&!(a.dep>0.2&&a.dep<89))return bad('The angle of depression α to the floor has to be between 0° and 89°.');
+    if(!(Math.abs(a.b1)<89.5&&Math.abs(a.t1)<89.5))return bad('The angles have to be between −90° and 90°.');
+    if(!(a.t1>a.b1))return bad('θ₂ (top) has to be bigger than θ₁ (bottom).');
+    f=x=>{const d=known?p.d:h/T(x.dep);return {d,H:d*(T(x.t1)-T(x.b1)),low:h+d*T(x.b1)}};
   }
   const r=f(a);
   let v=0;
   for(const k of keys){const s=p.sig[k]||0;if(!s)continue;const up=f({...a,[k]:a[k]+s}).H,dn=f({...a,[k]:a[k]-s}).H;v+=((up-dn)/2)**2}
   const t=k=>f4(T(a[k])),AE=r.H-h,lines=[];
+  if(mode==='wall'){
+    const EP=r.d*T(a.b1),EQ=r.d*T(a.t1),sg=v=>v<0?`(${f2(v)})`:f2(v);
+    if(keys[0]==='dep')lines.push(['In right ΔDEF (F is the floor at the wall)','tan α = EF / DE  ⇒  DE = h / tan α',`= ${f2(h)} / tan ${f1(a.dep)}° = ${f2(h)} / ${t('dep')} = <b>${f2(r.d)} m</b>`]);
+    lines.push(['In right ΔDEP','tan θ₁ = EP / DE  ⇒  EP = DE × tan θ₁',`= ${f2(r.d)} × tan ${f1(a.b1)}° = ${f2(EP)} m${EP<0?' (negative = below eye level)':''}`]);
+    lines.push(['In right ΔDEQ','tan θ₂ = EQ / DE  ⇒  EQ = DE × tan θ₂',`= ${f2(r.d)} × tan ${f1(a.t1)}° = ${f2(EQ)} m${EQ<0?' (negative = below eye level)':''}`]);
+    lines.push(['Height of the object','PQ = EQ − EP = DE (tan θ₂ − tan θ₁)',`= ${sg(EQ)} − ${sg(EP)} = <b>${f2(r.H)} m</b> = <b>${(r.H*100).toFixed(1)} cm</b>`]);
+    return {ok:true,mode,H:r.H,d:r.d,low:r.low,err:Math.sqrt(v),h0:h,ang:a,keys,lines};
+  }
   if(mode==='base'){
     lines.push(['In right ΔDEB','tan α = EB / DE  ⇒  DE = h / tan α',`= ${f2(h)} / tan ${f1(a.dep)}° = ${f2(h)} / ${t('dep')} = <b>${f2(r.d)} m</b>`]);
     lines.push(['In right ΔDEA','tan θ = AE / DE  ⇒  AE = DE × tan θ',`= ${f2(r.d)} × tan ${f1(a.top)}° = ${f2(r.d)} × ${t('top')} = ${f2(AE)} m`]);
@@ -587,6 +635,7 @@ function solve(mode,p){
 
 /* ---------- diagram ---------- */
 function figure(sol){
+  if(sol.mode==='wall')return wallFigure(sol);
   const W=360,Hv=220,L=30,R=96,Tp=20,B=36,{mode,h0,H,d}=sol,s=mode==='pair'?sol.s:0;
   const span=d+s,k=Math.min((W-L-R)/span,(Hv-Tp-B)/Math.max(H,h0,0.01));
   const gy=Hv-B,X=v=>L+v*k,Y=v=>gy-v*k,xo=X(span),near=X(s),ey=Y(h0);
@@ -619,16 +668,42 @@ function figure(sol){
   return `<svg class="fig" viewBox="0 0 ${W} ${Hv}" role="img" aria-label="Diagram of the measurement">${g}</svg>`;
 }
 
+function wallFigure(sol){
+  const W=360,Hv=220,L=30,R=96,Tp=20,B=36,{h0,H,d,low}=sol,top=Math.max(low+H,h0,0.01)*1.12,bot=Math.min(0,low);
+  const k=Math.min((W-L-R)/d,(Hv-Tp-B)/(top-bot));
+  const gy=Hv-B+bot*k,X=v=>L+v*k,Y=v=>gy-v*k,xw=X(d),xe=X(0),ey=Y(h0);
+  const pt=(x,y,t,anchor='end')=>`<text class="pt" x="${x}" y="${y}" text-anchor="${anchor}">${t}</text>`;
+  let g=`<line class="ground" x1="6" y1="${gy}" x2="${W-6}" y2="${gy}"/>`;
+  g+=`<line class="post" style="stroke:#55687a;stroke-width:3" x1="${xw}" y1="${gy}" x2="${xw}" y2="${Y(top)}"/>`;
+  g+=`<rect class="obj" style="fill:var(--amber);opacity:.35" x="${xw-7}" y="${Y(low+H)}" width="7" height="${Math.max(1,H*k)}"/>`;
+  g+=`<line class="eye" x1="${xe}" y1="${ey}" x2="${xw}" y2="${ey}"/>`;
+  g+=`<line class="sight" x1="${xe}" y1="${ey}" x2="${xw}" y2="${Y(low)}"/><line class="sight" x1="${xe}" y1="${ey}" x2="${xw}" y2="${Y(low+H)}"/>`;
+  if(sol.keys[0]==='dep')g+=`<line class="sight2" x1="${xe}" y1="${ey}" x2="${xw}" y2="${gy}"/>`+pt(xw+10,gy+14,'F','start');
+  g+=`<line class="post" x1="${xe}" y1="${gy}" x2="${xe}" y2="${ey}"/><circle cx="${xe}" cy="${ey}" r="3.5" fill="var(--text)"/>`;
+  g+=pt(xe-6,ey-4,'D')+pt(xw-10,ey+4,'E')+pt(xw-10,Y(low)+4,'P')+pt(xw-10,Y(low+H)+4,'Q');
+  g+=`<text class="tM" x="${(xe+xw)/2}" y="${gy+20}" text-anchor="middle">DE ${f2(d)} m</text>`;
+  g+=`<text class="tM" x="${xe-6}" y="${(gy+ey)/2+10}" text-anchor="end">h</text>`;
+  const my=(Y(low)+Y(low+H))/2;
+  g+=`<text class="tA" x="${xw+10}" y="${my-4}">PQ</text><text x="${xw+10}" y="${my+12}">${(H*100).toFixed(1)} cm</text>`;
+  return `<svg class="fig" viewBox="0 0 ${W} ${Hv}" role="img" aria-label="Diagram of the measurement">${g}</svg>`;
+}
+
 function renderSolution(el,sol,kind){
   if(!sol.ok){el.innerHTML=`<div class="msg">${sol.msg}</div>`;return}
   const angs=sol.keys.map(k=>`<div><span>${SYM[k]}</span><b>${f1(sol.ang[k])}°</b></div>`).join('');
   const errNote=kind==='camera'
-    ?`The ± is how much the answer could be off by. It comes from how much your hand was shaking, plus the sensor's own limit (${calibrated()?'about 0.3° after calibrating':'about 0.8° without calibrating'}).`
+    ?`The ± is how much the answer could be off by. It comes from how much your hand was shaking, plus the sensor's own limit (${calibrated()?'about 0.25° after calibrating':'about 1° without calibrating, so calibrate!'}).`
     :'The ± shows how much the height changes if each angle is off by 1°, which is about how accurate a normal protractor is.';
+  const wall=sol.mode==='wall',small=wall&&sol.H<1;
+  const big=small?`${(sol.H*100).toFixed(1)}<span>cm</span>`:`${f2(sol.H)}<span>m</span>`;
+  const pm=small?`± ${(sol.err*100).toFixed(1)} cm`:`± ${f2(sol.err)} m`;
+  const far=kind==='camera'&&sol.err/sol.H>0.1
+    ?`<div class="msg">The ± is big compared to the answer. ${sol.keys.includes('dep')&&sol.ang.dep<8?'You were far away, so the angle to the bottom was tiny and small errors got blown up. Walk closer, or measure the distance and use "I know the distance".':'Try standing about as far away as the thing is tall, and calibrate first.'}</div>`:'';
   el.innerHTML=`<div class="result">
-    <div><div class="eyebrow">Height of the building (AB)</div>
-    <div class="res-head"><div class="res-big num">${f2(sol.H)}<span>m</span></div>${sol.err?`<div class="res-err">± ${f2(sol.err)} m</div>`:''}</div></div>
-    <div class="meta"><div><span>Distance DE</span><b>${f2(sol.d)} m</b></div><div><span>Eye height h</span><b>${f2(sol.h0)} m</b></div>${angs}</div>
+    <div><div class="eyebrow">${wall?'Height of the object (PQ)':'Height of the building (AB)'}</div>
+    <div class="res-head"><div class="res-big num">${big}</div>${sol.err?`<div class="res-err">${pm}</div>`:''}</div></div>
+    ${far}
+    <div class="meta"><div><span>Distance DE</span><b>${f2(sol.d)} m</b></div>${wall?`<div><span>Bottom above floor</span><b>${f2(sol.low)} m</b></div>`:''}<div><span>Eye height h</span><b>${f2(sol.h0)} m</b></div>${angs}</div>
     ${figure(sol)}
     <div class="eyebrow">Working</div>
     <ol class="work">${sol.lines.map(([w,a,b])=>`<li><div><div class="w-t">${w},</div><div class="f">${a}</div><div class="s">${b}</div></div></li>`).join('')}</ol>
@@ -651,7 +726,7 @@ $$('[data-view="calc"] input').forEach(i=>i.addEventListener('input',calc));
 function calc(){
   $$('[data-cfor]').forEach(e=>e.hidden=e.dataset.cfor!==cmode);
   const n=id=>parseFloat($('#'+id).value);
-  const sol=solve(cmode,{h0:n('c-h0'),d:n('c-d'),s:n('c-s'),ang:{dep:n('c-dep'),top:cmode==='dist'?n('c-th'):n('c-top'),a1:n('c-a1'),a2:n('c-a2')},sig:{dep:1,top:1,a1:1,a2:1}});
+  const sol=solve(cmode,{h0:n('c-h0'),d:cmode==='wall'?n('c-wd'):n('c-d'),s:n('c-s'),ang:{dep:n('c-dep'),top:cmode==='dist'?n('c-th'):n('c-top'),a1:n('c-a1'),a2:n('c-a2'),b1:n('c-wb'),t1:n('c-wt')},sig:{dep:1,top:1,a1:1,a2:1,b1:1,t1:1}});
   renderSolution($('#calcOut'),sol,'manual');
 }
 
@@ -664,20 +739,18 @@ $('#h0').addEventListener('change',()=>store.set('h0',$('#h0').value));
 function setupMsg(t,ok){const m=$('#setupMsg');m.hidden=!t;m.textContent=t||'';m.classList.toggle('ok',!!ok)}
 
 /* ---------- tilt sensor ---------- */
-const S={raw:[],bg:[],ema:null,count:0,last:0};
-let cal=store.get('cal',null),attached=false;
+const S={raw:[],ema:null,count:0,last:0};
+// cal.e = how many degrees the sensor reads too high when the camera is exactly level
+let cal=store.get('cal2',null),attached=false;
 const calibrated=()=>!!cal;
 function onOri(e){
   if(e.beta==null||e.gamma==null)return;
-  const t=performance.now();
-  S.bg.push([t,e.beta,e.gamma]);
-  const b=(e.beta-(cal?cal.b:0))*D2R,g=(e.gamma-(cal?cal.g:0))*D2R;
+  const t=performance.now(),b=e.beta*D2R,g=e.gamma*D2R;
   // camera points out of the back of the phone; its angle above level, any way the phone is held
-  const el=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))*R2D;
-  S.raw.push([t,el]);
-  while(S.raw.length&&t-S.raw[0][0]>3000)S.raw.shift();
-  while(S.bg.length&&t-S.bg[0][0]>3000)S.bg.shift();
-  S.ema=S.ema==null?el:S.ema+0.18*(el-S.ema);
+  const raw=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))*R2D,el=raw-(cal?cal.e:0);
+  S.raw.push([t,el,raw]);
+  while(S.raw.length&&t-S.raw[0][0]>4000)S.raw.shift();
+  S.ema=S.ema==null?el:S.ema+0.12*(el-S.ema);
   S.count++;S.last=t;
 }
 async function waitFor(fn,ms){const t0=Date.now();while(Date.now()-t0<ms){if(fn())return true;await sleep(50)}return fn()}
@@ -733,31 +806,46 @@ async function ensureSensors(){
 function recentSd(ms){const t=performance.now(),xs=S.raw.filter(r=>t-r[0]<=ms).map(r=>r[1]);return xs.length>3?std(xs):null}
 
 /* ---------- calibration ---------- */
-let calTmp=[];
-function calText(){$('#calStat').textContent=cal?`Done ✓ (front-back off by ${f2(cal.b)}°, sideways off by ${f2(cal.g)}°, now fixed).`:'Not done yet. Takes 10 seconds and makes the answer more accurate.';$('#calBtn').textContent=cal?'Redo':'Calibrate'}
+let calTmp=[],audio=null;
+function beep(){
+  if(navigator.vibrate)navigator.vibrate(200);
+  try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=0.15;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+0.25)}catch(e){}
+}
+function calText(){$('#calStat').textContent=cal?`Done ✓ Your sensor was off by ${f2(Math.abs(cal.e))}° (reading too ${cal.e>0?'high':'low'}). That's fixed now.`:'Not done yet. Do this once, it fixes the biggest error.';$('#calBtn').textContent=cal?'Redo':'Calibrate'}
 $('#calBtn').onclick=()=>{$('#calPanel').hidden=!$('#calPanel').hidden};
 async function calRecord(i){
   await askMotionPermission();
+  // unlock sound now, while we still have the tap
+  try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(e){}
   if(!await ensureSensors()){setupMsg(sensorHelp+(diag.length?` (Details: ${diag.join(', ')})`:''));return}
-  const btn=$('#cal'+(i+1));btn.disabled=true;btn.textContent='Don\'t touch…';
-  await sleep(500);const t0=performance.now();await sleep(1500);
-  const xs=S.bg.filter(r=>r[0]>=t0);btn.textContent='Record '+(i+1);
-  if(xs.length<5){btn.disabled=false;setupMsg('Didn\'t get any sensor readings. Try again.');return}
-  const b=mean(xs.map(r=>r[1])),g=mean(xs.map(r=>r[2]));
-  if(Math.abs(b)>12||Math.abs(g)>12){btn.disabled=false;setupMsg('The phone isn\'t flat. Lay it screen-up on a table and try again.');return}
-  calTmp[i]={b,g};btn.disabled=false;setupMsg('');
-  if(i===0){$('#cal2').disabled=false;setupMsg('Got it. Now turn the phone around and tap Record 2.',true)}
-  else{cal={b:(calTmp[0].b+calTmp[1].b)/2,g:(calTmp[0].g+calTmp[1].g)/2};store.set('cal',cal);calText();$('#cal2').disabled=true;$('#calPanel').hidden=true;setupMsg('Calibrated! It\'s saved on this phone.',true)}
+  const btn=$('#cal'+(i+1));btn.disabled=true;
+  if(i===1){for(let s=3;s>0;s--){btn.textContent=`Screen on wall in ${s}…`;await sleep(1000)}}
+  btn.textContent='Hold still…';
+  await sleep(700);const t0=performance.now();await sleep(2000);
+  const xs=S.raw.filter(r=>r[0]>=t0).map(r=>r[2]);btn.textContent='Record '+(i+1);btn.disabled=false;beep();
+  if(xs.length<5){setupMsg('Didn\'t get any sensor readings. Try again.');return}
+  const m=mean(xs),sd=std(xs);
+  if(sd>0.3){setupMsg('The phone moved while recording. Press it firmly against the wall and try again.');return}
+  if(Math.abs(m)>8){setupMsg('The phone wasn\'t flat against the wall. Stand it up straight against a wall and try again.');return}
+  calTmp[i]=m;setupMsg('');
+  if(i===0){$('#cal2').disabled=false;setupMsg('Got it. Now tap Record 2 and press the screen against the same spot.',true);return}
+  // the wall's lean flips sign between the two, the sensor's own error doesn't
+  const e=(calTmp[0]+calTmp[1])/2;
+  if(Math.abs(e)>5){setupMsg('Those two readings don\'t match up. Make sure both are on the same spot of a straight wall and try again.');return}
+  cal={e};store.set('cal2',cal);calText();$('#cal2').disabled=true;$('#calPanel').hidden=true;
+  setupMsg(`Calibrated! The wall leans ${f2(Math.abs(calTmp[0]-calTmp[1])/2)}°, which has been cancelled out.`,true);
 }
 $('#cal1').onclick=()=>calRecord(0);$('#cal2').onclick=()=>calRecord(1);
-$('#calReset').onclick=()=>{cal=null;calTmp=[];store.set('cal',null);$('#cal2').disabled=true;calText()};
+$('#calReset').onclick=()=>{cal=null;calTmp=[];store.set('cal2',null);$('#cal2').disabled=true;calText()};
 
 /* ---------- camera ---------- */
 const cam={stream:null,track:null,wake:null,step:0,cap:{},busy:false,raf:0,params:null};
-const steps=()=>MODES[mode].steps;
+// a wall object with a known distance doesn't need the floor aim
+const steps=()=>mode==='wall'&&cam.params&&cam.params.d>0?MODES.wall.steps.slice(1):MODES[mode].steps;
 $('#startBtn').onclick=async()=>{
   setupMsg('');
-  const p={h0:parseFloat($('#h0').value),d:parseFloat($('#dIn').value),s:parseFloat($('#sIn').value)};
+  const p={h0:parseFloat($('#h0').value),d:parseFloat($(mode==='wall'?'#wIn':'#dIn').value),s:parseFloat($('#sIn').value)};
+  if(mode==='wall'&&!(p.d>0))p.d=NaN;
   if(!(p.h0>0))return setupMsg('Fill in your eye height first (around 1.5 m for most people).');
   if(mode==='dist'&&!(p.d>0))return setupMsg('Fill in the distance to the building.');
   if(mode==='pair'&&!(p.s>0))return setupMsg('Fill in how far you\'ll walk back.');
@@ -842,27 +930,34 @@ $('#shoot').onclick=async()=>{
   if(cam.busy||!$('#sheet').hidden)return;
   if(!attached)return flash('The tilt sensor isn\'t working yet, so the angle can\'t be measured.');
   cam.busy=true;const btn=$('#shoot');btn.classList.add('hold');
-  await sleep(350);const t0=performance.now();await sleep(900);
+  // wait for the tap wobble to die down, then average 1.5 s of readings (like a real clinometer's lock)
+  await sleep(500);const t0=performance.now();await sleep(1500);
   btn.classList.remove('hold');cam.busy=false;
   const xs=S.raw.filter(r=>r[0]>=t0).map(r=>r[1]);
   if(xs.length<4)return flash('The sensor didn\'t send anything. Move the phone a bit and try again.');
   const m=mean(xs),sd=std(xs);
-  if(sd>0.6)return flash(`Too shaky (±${f1(sd)}°). Tuck your elbows in and try again.`);
+  if(sd>0.5)return flash(`Too shaky (±${f1(sd)}°). Tuck your elbows in and try again.`);
   const st=steps()[cam.step],val=st.k==='dep'?-m:m;
-  if(st.k==='dep'&&!(val>0.2))return flash('That\'s above eye level. The bottom of the building should be lower than your eye, so aim lower.');
+  if(st.k==='dep'&&!(val>0.2))return flash('That\'s above eye level. The floor/bottom should be lower than your eye, so aim lower.');
   if(st.k==='top'&&mode==='base'&&!(m>-cam.cap.dep.v))return flash('The top has to be higher than the bottom. Aim at the top.');
   if((st.k==='a1'||st.k==='a2')&&!(val>0))return flash('Aim up at the top of the building.');
   if(st.k==='a2'&&!(val<cam.cap.a1.v))return flash('This angle should be smaller than the first one. Did you walk back, away from the building?');
+  if(st.k==='b1'&&cam.cap.dep&&!(val>-cam.cap.dep.v))return flash('The bottom of the thing has to be above the floor. Aim at its bottom edge.');
+  if(st.k==='t1'&&!(val>cam.cap.b1.v))return flash('The top edge has to be higher than the bottom edge. Aim at the top.');
   if(navigator.vibrate)navigator.vibrate(25);
   cam.cap[st.k]={v:val,sd};cam.step++;
   if(cam.step>=steps().length)finish();
-  else{flash(`${SYM[st.k]} = ${f1(val)}° locked`,true);renderStep()}
+  else{
+    renderStep();
+    if(st.k==='dep'&&val<8&&mode==='base')flash(`α = ${f1(val)}° is quite small, so you're far away. Small angles make errors bigger. Walking closer will help.`);
+    else flash(`${SYM[st.k]} = ${f1(val)}° locked`,true);
+  }
 };
 $('#vfUndo').onclick=()=>{if(cam.step>0){cam.step--;delete cam.cap[steps()[cam.step].k];renderStep()}};
 $('#vfClose').onclick=closeVF;
 let lastSol=null;
 function finish(){
-  const floor=calibrated()?0.3:0.8,ang={},sig={};
+  const floor=calibrated()?0.25:1,ang={},sig={};
   for(const [k,v] of Object.entries(cam.cap)){ang[k]=v.v;sig[k]=Math.sqrt(v.sd**2+floor**2)}
   lastSol=solve(mode,{...cam.params,ang,sig});
   renderSolution($('#sheetOut'),lastSol,'camera');
@@ -873,13 +968,13 @@ $('#againBtn').onclick=()=>{cam.step=0;cam.cap={};$('#sheet').hidden=true;render
 $('#sheetDone').onclick=closeVF;
 $('#saveBtn').onclick=()=>{
   if(!lastSol||!lastSol.ok)return;
-  const h=store.get('hist',[]);h.unshift({t:Date.now(),name:$('#saveName').value.trim()||'Something tall',H:lastSol.H,err:lastSol.err,d:lastSol.d,mode});
+  const h=store.get('hist',[]);h.unshift({t:Date.now(),name:$('#saveName').value.trim()||(mode==='wall'?'Something on a wall':'Something tall'),H:lastSol.H,err:lastSol.err,d:lastSol.d,mode});
   store.set('hist',h.slice(0,30));renderHist();$('#saveBtn').disabled=true;$('#saveBtn').textContent='Saved ✓';
 };
 function renderHist(){
   const h=store.get('hist',[]);$('#histPanel').hidden=!h.length;
   $('#hist').innerHTML=h.map((r,i)=>`<div><div style="min-width:0"><b>${f2(r.H)} m</b> <span class="num">± ${f2(r.err)}</span><br><span class="hn"></span></div><button data-del="${i}" aria-label="Delete">✕</button></div>`).join('');
-  $$('#hist .hn').forEach((el,i)=>{const r=h[i];el.textContent=`${r.name} · ${new Date(r.t).toLocaleDateString()} · ${r.mode==='pair'?'two spots':r.mode==='dist'?'known distance':'no tape'}`});
+  $$('#hist .hn').forEach((el,i)=>{const r=h[i];el.textContent=`${r.name} · ${new Date(r.t).toLocaleDateString()} · ${r.mode==='pair'?'two spots':r.mode==='dist'?'known distance':r.mode==='wall'?'on a wall':'no tape'}`});
   $$('[data-del]').forEach(b=>b.onclick=()=>{const h2=store.get('hist',[]);h2.splice(+b.dataset.del,1);store.set('hist',h2);renderHist()});
 }
 
