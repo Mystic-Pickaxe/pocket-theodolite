@@ -673,17 +673,22 @@ async function ensureSensors(){
   if(attached)return true;
   if(!window.isSecureContext){setupMsg('Open this from the https:// link. Phones only let websites use the camera and tilt sensor on secure links.');return false}
   if(typeof DeviceOrientationEvent==='undefined'){setupMsg('This browser can\'t read the tilt sensor. Try Chrome or Safari, or use the Calculator tab.');return false}
+  // iPhones always ask first; newer Chrome on Android can ask too
+  let perm='granted';
   if(typeof DeviceOrientationEvent.requestPermission==='function'){
-    let r='denied';try{r=await DeviceOrientationEvent.requestPermission()}catch(e){r='error'}
-    if(r!=='granted'){setupMsg('Motion access got blocked. Close this tab, open the link again and tap Allow this time. Still not asking? Go to Settings › Apps › Safari › Advanced › Website Data, delete this site and try again.');return false}
+    try{perm=await DeviceOrientationEvent.requestPermission()}catch(e){perm='error'}
   }
-  addEventListener('deviceorientation',onOri,true);attached=true;
-  if(!await waitFor(()=>S.count>0,2000)){
-    removeEventListener('deviceorientation',onOri,true);attached=false;
-    setupMsg(isAndroid?'The tilt sensor isn\'t sending anything. In Chrome go to ⋮ › Settings › Site settings › Motion sensors, turn it on, and try again.':'No tilt readings from this device. Try it on a phone in Safari or Chrome.');
-    return false;
+  if(perm!=='granted'&&isIOS){setupMsg('Motion access got blocked. Close this tab, open the link again and tap Allow this time. Still not asking? Go to Settings › Apps › Safari › Advanced › Website Data, delete this site and try again.');return false}
+  // even if Android said no, the sensor sometimes still works, so listen before giving up
+  for(const ev of ['deviceorientation','deviceorientationabsolute']){
+    addEventListener(ev,onOri,true);
+    if(await waitFor(()=>S.count>0,2000)){attached=true;return true}
+    removeEventListener(ev,onOri,true);
   }
-  return true;
+  setupMsg(isAndroid
+    ?'Chrome is blocking the tilt sensor. Tap the icon on the left of the address bar › Permissions › Motion sensors › Allow, then reload the page. (Or ⋮ › Settings › Site settings › Motion sensors › Allowed.) If you opened the link from Google Lens or WhatsApp, tap ⋮ › Open in Chrome first.'
+    :'No tilt readings from this device. Try it on a phone in Safari or Chrome.');
+  return false;
 }
 function recentSd(ms){const t=performance.now(),xs=S.raw.filter(r=>t-r[0]<=ms).map(r=>r[1]);return xs.length>3?std(xs):null}
 
