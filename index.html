@@ -195,7 +195,7 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding-bottom:24px}
 #sensorErr b{font:700 20px var(--f-disp);color:#ffc1b9}
 #sensorErr p{font-size:15px}
 #sensorErr .fine{font:400 12px var(--f-num);color:var(--mute);overflow-wrap:anywhere}
-#distHint{background:rgba(255,181,71,.25);border:1px solid rgba(255,181,71,.6);margin-top:4px}
+#distHint{background:rgba(255,181,71,.25);border:1px solid rgba(255,181,71,.6);margin-top:4px;white-space:pre-line;text-align:center;max-width:min(92vw,420px);line-height:1.35}
 #distHint.good{background:rgba(127,220,149,.2);border-color:rgba(127,220,149,.6)}
 .tries{display:grid;gap:6px}
 .tries div{display:flex;justify-content:space-between;font:600 14px var(--f-num);padding:6px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
@@ -578,7 +578,7 @@ $('#permHint').textContent=isIOS
 
 /* ---------- the three ways ---------- */
 const MODES={
-  base:{steps:[{k:'dep',t:'Aim at the bottom',h:'Put the dot right where the building touches the ground, then tap.'},{k:'top',t:'Now aim at the very top',h:'Put the dot on the highest point and tap.'}]},
+  base:{steps:[{k:'dep',t:'Aim at the bottom',h:'Put the dot right where the building touches the ground, then tap.'},{k:'top',t:'Now aim at the very top',h:'Don\'t move or lift the phone, just tilt it up. Put the dot on the highest point and tap.'}]},
   dist:{steps:[{k:'top',t:'Aim at the very top',h:'Put the dot on the highest point and tap.'}]},
   pair:{steps:[{k:'a1',t:'Spot 1: aim at the top',h:'Stand closer to the building first, then tap.'},{k:'a2',t:'Spot 2: aim at the top',h:'Walk straight back S m (stay in line with the building), then tap again.'}]},
   wall:{steps:[{k:'dep',t:'Aim at the floor by the wall',h:'Put the dot where the wall meets the floor, right below the thing.'},{k:'b1',t:'Aim at its bottom edge',h:'Tilt the phone, don\'t move it up or down. Then tap.'},{k:'t1',t:'Aim at its top edge',h:'Same spot, just tilt. Then tap.'}]},
@@ -923,21 +923,53 @@ function flash(t,ok){const f=$('#flash');f.textContent=t;f.hidden=false;f.classL
 const LOCK_MS=1200;
 // drop the 10% highest and lowest readings so a single jolt can't pull the average
 function trimmedMean(xs){const s=[...xs].sort((a,b)=>a-b),k=Math.floor(s.length*0.1);return mean(s.slice(k,s.length-k))}
-// where you're standing decides how much tan magnifies small errors
-function distanceHint(e){
-  const st=steps()[cam.step];if(!st||e==null)return '';
-  if(st.k==='dep'){
-    const a=-e;if(a<0)return '';
-    const lo=mode==='wall'?20:15,hi=mode==='wall'?55:50;
-    return a<lo?'Move closer for a better answer':a>hi?'Step back a little':'Good distance ✓';
+// what you'd get if you tapped right now, using the angles locked so far plus this one.
+// where you stand decides how much tan magnifies small errors, so the ± tells you if the spot is good
+const len=(v,cm)=>cm?`${(v*100).toFixed(1)} cm`:`${f2(v)} m`;
+function liveGuide(e){
+  const st=steps()[cam.step];if(!st||e==null)return null;
+  const k=st.k,p=cam.params,cap=cam.cap,floor=calibrated()?0.25:1,v=k==='dep'?-e:e,G=(t,c)=>({t,c});
+  if(k==='dep'){
+    if(!(v>0.5))return G(`▼ Aim down at ${mode==='wall'?'the floor by the wall':'the bottom'}`,'warn');
+    const d=p.h0/Math.tan(v*D2R),lo=mode==='wall'?20:15,hi=mode==='wall'?55:50;
+    const t=`If the dot is on ${mode==='wall'?'the floor line':'the bottom'}: DE ≈ ${f2(d)} m`;
+    return v<lo?G(`${t}\nFar away, small errors get big. Move closer`,'warn'):v>hi?G(`${t}\nToo close, step back a little`,'warn'):G(`${t}\nGood distance ✓`,'good');
   }
-  if(st.k==='top'||st.k==='a1'){if(e>75)return 'Too steep, step back';if(mode==='dist'&&e<25&&e>0)return 'You could move closer';return e>0?'Good distance ✓':''}
-  return '';
+  const ang={},sig={};
+  for(const [kk,c] of Object.entries(cap)){ang[kk]=c.v;sig[kk]=Math.hypot(c.sd,floor)}
+  ang[k]=v;sig[k]=floor;
+  const preview=(sol,cm,extra)=>{
+    if(!sol.ok)return G(sol.msg,'warn');
+    const rel=sol.err/Math.max(sol.H,1e-6),t=`If you tap now: ${len(sol.H,cm)} ± ${len(sol.err,cm)}`;
+    if(extra)return G(`${t}\n${extra}`,'warn');
+    return rel<0.05?G(`${t}\nGood spot ✓`,'good'):G(`${t}\n± is big. ${!calibrated()?'Calibrate first, it shrinks the ± a lot':rel>0.15?'Change where you stand':'Hold steadier, elbows tucked in'}`,'warn');
+  };
+  if(mode==='base'||mode==='dist'){
+    if(mode==='base'&&!(v>-cap.dep.v+0.5))return G('▲ Tilt up to the top. Same spot, same height','warn');
+    if(!(v>-89))return G('▲ Tilt up to the top','warn');
+    return preview(solve(mode,{...p,ang,sig}),false,v>72?'Very steep, step back for a better answer':'');
+  }
+  if(mode==='pair'){
+    if(!(v>0.5))return G('▲ Aim up at the top','warn');
+    if(k==='a1')return v>70?G('Very steep, step back a bit','warn'):v<25?G('Pretty far. Move closer for spot 1','warn'):G('Good spot ✓','good');
+    if(!(v<ang.a1))return G(`Angle has to be less than θ₁ = ${f1(ang.a1)}°. Walk back`,'warn');
+    return preview(solve('pair',{...p,ang,sig}),false,ang.a1-v<8?`θ₁ − θ₂ is only ${f1(ang.a1-v)}°. Walk further back, at least 10° helps a lot`:'');
+  }
+  // thing on a wall
+  const d=p.d>0?p.d:p.h0/Math.tan(ang.dep*D2R);
+  if(k==='b1'){
+    const low=p.h0+d*Math.tan(v*D2R);
+    if(!(low>0))return G('▲ That\'s below the floor. Aim at the bottom edge','warn');
+    return G(`Bottom edge ≈ ${len(low,low<1)} above the floor`,'good');
+  }
+  if(!(v>ang.b1+0.2))return G('▲ Tilt up to the top edge. Just tilt, don\'t lift','warn');
+  const sol=solve('wall',{...p,ang,sig});
+  return preview(sol,sol.ok&&sol.H<1,v-ang.b1<6?'It looks tiny from here. Move closer':'');
 }
 function hud(){
   if($('#vf').hidden)return;
-  const dh=$('#distHint'),txt=distanceHint(S.ema);
-  dh.hidden=!txt;dh.textContent=txt;dh.classList.toggle('good',txt.endsWith('✓'));
+  const dh=$('#distHint'),g=liveGuide(S.ema);
+  dh.hidden=!g;if(g){dh.textContent=g.t;dh.classList.toggle('good',g.c==='good')}
   const now=performance.now();
   if(S.ema!=null&&now-S.last<1500){
     $('#ang').textContent=f1(Math.abs(S.ema))+'°';
@@ -995,15 +1027,48 @@ function finish(){
   lastSol=solve(mode,{...cam.params,ang,sig});
   if(lastSol.ok)cam.runs.push({H:lastSol.H,err:lastSol.err,d:lastSol.d});
   renderSolution($('#sheetOut'),lastSol,'camera');
+  if(lastSol.ok)$('#sheetOut .res-head').insertAdjacentHTML('afterend',bestSpot(lastSol,sig));
   renderAvg();
   $('#saveBtn').disabled=!lastSol.ok;$('#saveBtn').textContent=cam.runs.length>1?`Save the average of ${cam.runs.length}`:'Save';
   $('#sheet').hidden=false;$('#sheet').scrollTop=0;
 }
+// now that we roughly know the answer, try every standing distance and find the one with the smallest ±
+function bestSpot(sol,sig){
+  if(sol.mode==='pair')return '';
+  const s=Math.max(...Object.values(sig)),h=sol.h0,T=Math.atan,R=x=>x*R2D;
+  const errAt=d=>{
+    const ang={},sg={};
+    if(sol.mode==='wall'){if(sol.keys[0]==='dep')ang.dep=R(T(h/d));ang.b1=R(T((sol.low-h)/d));ang.t1=R(T((sol.low+sol.H-h)/d))}
+    else{ang.dep=R(T(h/d));ang.top=R(T((sol.H-h)/d))}
+    // too steep or too close isn't worth it: the top edge hides and the phone itself moving starts to matter
+    const lim=sol.mode==='wall'?{dep:55,b1:60,t1:60}:{dep:50,top:65};
+    if(d<(sol.mode==='wall'?1:2)||sol.keys.some(k=>Math.abs(ang[k])>lim[k]))return Infinity;
+    for(const k of sol.keys)sg[k]=s;
+    const r=solve(sol.mode,{h0:h,d:sol.mode==='base'||(sol.mode==='wall'&&sol.keys[0]==='dep')?NaN:d,ang,sig:sg});
+    return r.ok?r.err:Infinity;
+  };
+  let best={d:sol.d,e:Infinity};
+  const top=6*Math.max(sol.H+(sol.low||0),h);
+  for(let d=0.2;d<=top;d*=1.04){const e=errAt(d);if(e<best.e)best={d,e}}
+  // compare like with like: same angle error at both spots
+  const now=errAt(sol.d),cm=sol.mode==='wall'&&sol.H<1;
+  if(!isFinite(best.e))return '';
+  if(isFinite(now)&&!(now>best.e*1.3&&Math.abs(best.d-sol.d)/sol.d>0.2))return `<div class="msg ok">You stood in a good spot ✓ (DE ${f2(sol.d)} m). Moving wouldn't make the ± much smaller.</div>`;
+  return `<div class="msg">Best spot for this one: about <b>${f2(best.d)} m</b> away (you were ${f2(sol.d)} m). From there the ± would be about ${len(best.e,cm)} instead of ${len(isFinite(now)?now:sol.err,cm)}. ${sol.mode==='dist'?'Measure that distance with the tape and':'Stand there and'} tap "Add another try".</div>`;
+}
 // several tries → mean and spread
+// a try that's way off from the others (moved the phone, aimed at the wrong spot) is left out
+function keptRuns(){
+  const r=cam.runs;if(r.length<3)return r.map(x=>({...x,out:false}));
+  const med=a=>{const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
+  const Hs=r.map(x=>x.H),m=med(Hs),mad=med(Hs.map(v=>Math.abs(v-m)))*1.4826;
+  const lim=Math.max(3*mad,2*med(r.map(x=>x.err)),0.02*m);
+  return r.map(x=>({...x,out:Math.abs(x.H-m)>lim}));
+}
 function runStats(){
-  const r=cam.runs,n=r.length,Hs=r.map(x=>x.H),H=mean(Hs),sd=n>1?std(Hs):0;
+  const all=keptRuns(),r=all.filter(x=>!x.out),n=r.length,Hs=r.map(x=>x.H),H=mean(Hs),sd=n>1?std(Hs):0;
   const err=Math.max(sd,mean(r.map(x=>x.err)))/Math.sqrt(n);
-  return {n,H,sd,err,d:mean(r.map(x=>x.d))};
+  return {n,H,sd,err,d:mean(r.map(x=>x.d)),all,dropped:all.length-n};
 }
 function renderAvg(){
   const el=$('#sheetAvg'),r=cam.runs;
@@ -1011,7 +1076,8 @@ function renderAvg(){
   const st=runStats(),cm=mode==='wall'&&st.H<1,u=v=>cm?`${(v*100).toFixed(1)} cm`:`${f2(v)} m`;
   el.innerHTML=`<div class="eyebrow">Average of ${st.n} tries</div>
     <div class="res-head"><div class="res-big num">${cm?(st.H*100).toFixed(1):f2(st.H)}<span>${cm?'cm':'m'}</span></div><div class="res-err">± ${u(st.err)}</div></div>
-    <div class="tries">${r.map((x,i)=>`<div><span>Try ${i+1}</span>${u(x.H)}</div>`).join('')}</div>
+    <div class="tries">${st.all.map((x,i)=>`<div${x.out?' style="opacity:.5;text-decoration:line-through"':''}><span>Try ${i+1}${x.out?' (way off, left out)':''}</span>${u(x.H)}</div>`).join('')}</div>
+    ${st.dropped?`<p class="fine">${st.dropped>1?st.dropped+" tries were":"1 try was"} too far from the others, so it's not in the average. Probably the phone moved or the dot slipped.</p>`:''}
     <p class="fine">Mean = (sum of tries) ÷ ${st.n}. The tries differ from each other by about ${u(st.sd)}. Averaging ${st.n} tries makes the ± about √${st.n} ≈ ${Math.sqrt(st.n).toFixed(1)} times smaller than a single try.</p>`;
 }
 $('#againBtn').onclick=()=>{cam.step=0;cam.cap={};$('#sheet').hidden=true;renderStep()};
