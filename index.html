@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Pocket Theodolite</title>
+<title>Sightline</title>
 <script>try{const t=JSON.parse(localStorage.getItem('pt-theme'));if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="description" content="Find the height of any building with your phone camera and trigonometry.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,6 +43,7 @@ body{background:var(--bg);color:var(--text);font:16px/1.5 var(--f-ui);font-featu
 body.vf-open{overflow:hidden}
 .wrap{max-width:600px;margin:0 auto;padding-block:12px 32px;display:grid;gap:12px}
 .view{display:grid;gap:12px}
+.wrap>*,.view>*{min-width:0}
 h1,h2,h3{margin:0;text-wrap:balance;line-height:1.15;letter-spacing:-.022em;font-weight:700}
 p{margin:0}
 button,input{font:inherit;color:inherit;letter-spacing:inherit}
@@ -53,7 +54,7 @@ b{font-weight:600}
 
 /* header + tabs */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 0}
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .brand svg{flex:none;color:var(--accent)}
 .brand h1{font-size:17px;font-weight:600;letter-spacing:-.01em}
 .brand small{display:block;color:var(--mute);font-size:12px;font-weight:400;letter-spacing:0}
@@ -64,7 +65,7 @@ b{font-weight:600}
 .theme button svg{width:16px;height:16px}
 .theme button[aria-checked="true"]{background:var(--seg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tabbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin:0 -16px;padding:8px 16px;background:var(--bar);backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px)}
-.tabs{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:3px;border-radius:12px;background:var(--raise)}
+.tabs{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(2,1fr);gap:2px;padding:3px;border-radius:12px;background:var(--raise)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .tabs button{border:0;background:none;border-radius:9px;padding:8px 4px;color:var(--mute);font-size:14px;font-weight:500}
 .tabs button[aria-pressed="true"]{background:var(--seg);color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
@@ -153,6 +154,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .fig text{font:500 11px var(--f-ui);fill:var(--text);font-variant-numeric:tabular-nums;paint-order:stroke;stroke:var(--raise);stroke-width:3px}
 .fig .pt{font-weight:700;font-size:12px}
 .fig .tA{fill:var(--el)}.fig .tC{fill:var(--dep)}.fig .tM{fill:var(--mute)}
+.workbox summary{cursor:pointer;color:var(--accent);font-size:15px;font-weight:600;list-style:none;padding:4px 0}
+.workbox summary::-webkit-details-marker{display:none}
+.workbox summary::after{content:" ›";display:inline-block;transition:transform .15s}
+.workbox[open] summary::after{transform:rotate(90deg)}
+.workbox[open] summary{margin-bottom:12px}
 .work{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:w}
 .work li{display:grid;grid-template-columns:24px 1fr;gap:10px}
 .work li::before{counter-increment:w;content:counter(w);width:22px;height:22px;border-radius:50%;background:var(--raise);display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--mute)}
@@ -245,7 +251,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
   <header class="top">
     <div class="brand">
       <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="currentColor"/><path d="M7 22H23M7 22L22 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M13 22A6 6 0 0 0 11.6 18.2" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
-      <div><h1>Pocket Theodolite</h1><small>Building height calculator · <span id="devchip"><span>Checking…</span></span></small></div>
+      <div><h1>Sightline</h1><small>Building height calculator · <span id="devchip"><span>Checking…</span></span></small></div>
     </div>
     <div class="theme" role="radiogroup" aria-label="Theme">
       <button role="radio" data-theme-set="light" aria-label="Light" title="Light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
@@ -257,7 +263,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
   <div class="tabbar"><nav class="tabs" aria-label="Sections">
     <button data-tab="measure" aria-pressed="true">Measure</button>
     <button data-tab="calc" aria-pressed="false">Calculator</button>
-    <button data-tab="learn" aria-pressed="false">How it works</button>
   </nav></div>
 
   <!-- MEASURE -->
@@ -265,7 +270,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
     <div class="hero">
       <div class="eyebrow">Building height calculator</div>
       <h2>How tall is that building?</h2>
-      <p>Point your phone at it and tap twice. The phone's tilt sensor gives the angle, and the app does the same tan θ maths from our textbook to find the height. No tape, no climbing.</p>
+      <p>Point your phone at it and tap twice.</p>
       <svg class="scene" viewBox="0 0 320 150" aria-hidden="true">
         <line class="s-ground" x1="0" y1="132" x2="320" y2="132"/>
         <rect class="s-bld" x="232" y="26" width="46" height="106" rx="2"/>
@@ -290,7 +295,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
         <div id="qr" aria-label="QR code for this page"></div>
         <div style="display:grid;gap:8px;min-width:0">
           <h2 style="font-size:24px">This part needs a phone</h2>
-          <p class="lead">A laptop doesn't have a tilt sensor, so scan this code with your phone (iPhone or Android, both work). You can still use the Calculator tab here.</p>
+          <p class="lead">Scan this with your phone. The Calculator tab works here too.</p>
           <p class="url" id="pageurl"></p>
         </div>
       </div>
@@ -323,7 +328,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
         <div class="field" data-for="pair"><label for="sIn">How far you'll walk back</label><div class="inp"><input id="sIn" type="number" inputmode="decimal" step="0.1" min="0.1" value="10"><span>m</span></div></div>
         <div class="field" data-for="wall"><label for="wIn">Distance to the wall (optional)</label><div class="inp"><input id="wIn" type="number" inputmode="decimal" step="0.01" min="0.1" placeholder="skip"><span>m</span></div></div>
       </div>
-      <p class="fine" data-for="wall">Leave the distance empty and the app finds it by aiming at the floor first. If you measured it with a tape, fill it in for a better answer.</p>
       <div class="stepno"><span>3</span>Point and tap</div>
       <div id="setupMsg" class="msg" hidden></div>
       <button class="btn primary" id="startBtn">Open camera</button>
@@ -332,7 +336,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
 
     <div class="panel">
       <div class="calib">
-        <div><b>Calibrate the sensor</b><span id="calStat">Not done yet. Do this once, it fixes the biggest error.</span></div>
+        <div><b>Calibrate the sensor</b><span id="calStat">Do this once for better answers.</span></div>
         <button class="btn" id="calBtn">Calibrate</button>
       </div>
       <div id="calPanel" hidden style="display:grid;gap:10px">
@@ -341,7 +345,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
           <li>Tap <b>Record 2</b>, then within 3 seconds press the <b>screen flat against the same spot</b> on the wall. Hold it until it beeps.</li>
         </ol>
         <div class="row"><button class="btn" id="cal1">Record 1</button><button class="btn" id="cal2" disabled>Record 2</button><button class="btn ghost" id="calReset">Reset</button></div>
-        <p class="fine">Why a wall? When you measure, the phone is standing up, so that's how it needs to be checked. Why flip it? If the wall leans a tiny bit, flipping the phone makes that lean count once as "up" and once as "down", so it cancels out. Whatever's left is the sensor's own error, and the app subtracts it from every reading. If your phone has a big camera bump, keep its case on so the back sits flat.</p>
       </div>
     </div>
 
@@ -356,7 +359,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
     <div class="panel">
       <div class="eyebrow">Do it by hand</div>
       <h2 style="font-size:26px">Calculator</h2>
-      <p class="lead">Got the angles some other way, like a protractor clinometer or a textbook question? Put the numbers in and it solves it, with the full working.</p>
       <div class="seg" id="cmodeSeg">
         <button data-mode="base" aria-pressed="true">No tape</button>
         <button data-mode="dist" aria-pressed="false">Distance</button>
@@ -379,152 +381,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
       <p class="fine" data-cfor="wall">If a point is below your eye, type its angle as negative (e.g. −8°).</p>
     </div>
     <div class="panel" id="calcOut"></div>
-  </section>
-
-  <!-- LEARN -->
-  <section data-view="learn" class="view learn" hidden>
-    <div class="panel">
-      <div class="eyebrow">The idea</div>
-      <h3>Heights from angles</h3>
-      <p>Trigonometry lets you find the heights of towers and buildings from angles. This app measures the angles for real using your phone, then does the working.</p>
-      <svg class="fig" viewBox="0 0 360 220" role="img" aria-label="Figure: tower AB, observer's eye D, horizontal line DE">
-        <line class="ground" x1="6" y1="186" x2="354" y2="186"/>
-        <rect class="obj" x="276" y="26" width="10" height="160"/>
-        <line class="eye" x1="60" y1="150" x2="276" y2="150"/>
-        <line class="sight" x1="60" y1="150" x2="276" y2="26"/>
-        <line class="sight2" x1="60" y1="150" x2="276" y2="186"/>
-        <line class="post" x1="60" y1="186" x2="60" y2="150"/><circle cx="60" cy="150" r="3.5" fill="var(--text)"/>
-        <path class="arc" style="stroke:var(--el)" d="M100 150 A40 40 0 0 0 94.7 130"/>
-        <path class="arc" style="stroke:var(--dep)" d="M88 150 A28 28 0 0 1 87.5 154.7"/>
-        <text class="tA" x="104" y="140">θ (elevation)</text>
-        <text class="tC" x="94" y="168">α (depression)</text>
-        <text class="pt" x="264" y="30" text-anchor="end">A</text>
-        <text class="pt" x="264" y="146" text-anchor="end">E</text>
-        <text class="pt" x="292" y="190">B</text>
-        <text class="pt" x="52" y="146" text-anchor="end">D</text>
-        <text class="pt" x="52" y="200" text-anchor="end">C</text>
-        <text class="tM" x="168" y="202" text-anchor="middle">CB = DE (distance)</text>
-        <text class="tM" x="66" y="172">h</text>
-        <text class="tM" x="294" y="96">AB</text><text class="tM" x="294" y="110">height</text>
-      </svg>
-      <ul class="tips">
-        <li><b>AB</b> is the building. A is the top, B is the bottom.</li>
-        <li><b>D</b> is my eye (where I hold the phone). C is the ground below me, so <b>DC = h</b> is my eye height.</li>
-        <li><b>DE</b> is the horizontal line from my eye to the building. Since DE ∥ CB, <b>EB = DC = h</b>.</li>
-        <li><b>DA</b> and <b>DB</b> are my lines of sight.</li>
-      </ul>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">The trigonometry behind it</div>
-      <h3>Quick revision</h3>
-      <p>In a right triangle, for an angle θ:</p>
-      <div class="math">tan θ = <span class="r">side opposite to θ</span> / <span class="r">side adjacent to θ</span></div>
-      <div class="tablewrap"><table class="ratios">
-        <tr><th>θ</th><th>0°</th><th>30°</th><th>45°</th><th>60°</th><th>90°</th></tr>
-        <tr><th>tan θ</th><td>0</td><td>1/√3</td><td>1</td><td>√3</td><td>not defined</td></tr>
-      </table></div>
-      <ul class="tips">
-        <li><b>Angle of elevation:</b> the angle between the horizontal and your line of sight when you look <b>up</b> at something.</li>
-        <li><b>Angle of depression:</b> the angle between the horizontal and your line of sight when you look <b>down</b> at something.</li>
-      </ul>
-      <p class="callout">For angles like 37.4° that aren't in the table, the app just uses the exact tan value (like a scientific calculator would).</p>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">Way 1 · No tape needed</div>
-      <h3>Two angles, no measuring tape</h3>
-      <p>I look down at the bottom B (angle of depression α), then up at the top A (angle of elevation θ). Only my eye height h is known.</p>
-      <div class="math">
-        <span class="c">In right ΔDEB,</span><br>
-        tan α = EB / DE = h / DE<br>
-        ⇒ <span class="r">DE = h / tan α</span><br>
-        <span class="c">In right ΔDEA,</span><br>
-        tan θ = AE / DE<br>
-        ⇒ <span class="r">AE = DE × tan θ</span><br>
-        <span class="c">Height of building,</span><br>
-        <span class="r">AB = AE + EB = AE + h</span>
-      </div>
-      <p class="callout">The cool part: the distance DE isn't measured at all. The angle of depression and my own height give it to us.</p>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">Way 2 · I know the distance</div>
-      <h3>Distance + one angle</h3>
-      <p>If I already measured DE (with a tape or by counting steps), I only need the angle of elevation of the top.</p>
-      <div class="math">
-        <span class="c">In right ΔDEA,</span><br>
-        tan θ = AE / DE<br>
-        ⇒ <span class="r">AE = DE × tan θ</span><br>
-        <span class="r">AB = AE + h</span>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">Way 3 · Two spots</div>
-      <h3>When you can't see the bottom</h3>
-      <p>Here the angle of elevation of the top is θ₁ from one point, and you move s metres further away in a straight line, where it becomes θ₂. Call my near eye position D and the far one F, so DF = s.</p>
-      <div class="math">
-        <span class="c">In right ΔAED,</span><br>
-        tan θ₁ = AE / DE ⇒ AE = DE tan θ₁ &nbsp;<span class="c">…(1)</span><br>
-        <span class="c">In right ΔAEF,</span><br>
-        tan θ₂ = AE / (DE + s) ⇒ AE = (DE + s) tan θ₂ &nbsp;<span class="c">…(2)</span><br>
-        <span class="c">From (1) and (2),</span><br>
-        DE tan θ₁ = (DE + s) tan θ₂<br>
-        ⇒ <span class="r">DE = s tan θ₂ / (tan θ₁ − tan θ₂)</span><br>
-        <span class="c">Put DE back in (1) to get AE, then</span> <span class="r">AB = AE + h</span>
-      </div>
-      <h3 style="font-size:18px">Example (like the ones in the book)</h3>
-      <p>From a point on the ground, the angle of elevation of the top of a tower is 30°. On walking 20 m towards the tower, it becomes 60°. Find the height of the tower.</p>
-      <div class="math">
-        <span class="c">Here h = 0 (angles taken from the ground), s = 20 m,</span><br>
-        <span class="c">θ₁ = 60° (near), θ₂ = 30° (far)</span><br>
-        DE = 20 × (1/√3) / (√3 − 1/√3)<br>
-        &nbsp;&nbsp;&nbsp;= 20 × (1/√3) / (2/√3) = 10 m<br>
-        AB = DE tan 60° = 10√3 = <span class="r">17.32 m</span>
-      </div>
-      <p class="callout">Open the Calculator, pick "Two spots", put eye height 0, s = 20, θ₁ = 60, θ₂ = 30, and you'll get 17.32 m. Same answer as the book.</p>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">Way 4 · Thing on a wall</div>
-      <h3>Calendars, posters, windows, flags</h3>
-      <p>Here you measure the angle to the bottom and to the top of the thing. Let P be the bottom of the calendar and Q its top. E is the point on the wall at my eye level, so DE is my distance from the wall.</p>
-      <div class="math">
-        <span class="c">In right ΔDEP,</span><br>
-        tan θ₁ = EP / DE ⇒ EP = DE tan θ₁<br>
-        <span class="c">In right ΔDEQ,</span><br>
-        tan θ₂ = EQ / DE ⇒ EQ = DE tan θ₂<br>
-        <span class="c">Height of the calendar,</span><br>
-        <span class="r">PQ = EQ − EP = DE (tan θ₂ − tan θ₁)</span>
-      </div>
-      <p>If DE isn't known, the app first aims at the floor below the calendar (call it F) and uses tan α = EF / DE = h / DE, the same way as Way 1.</p>
-      <p class="callout">If a point is below my eye, its angle is a depression, so I count it as negative. Then EP comes out negative too, which just means P is below E, and PQ = EQ − EP still works.</p>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">Behind the scenes</div>
-      <h3>How does the phone know the angle?</h3>
-      <p>Every phone has a tiny sensor called an accelerometer that feels which way gravity is pulling, kind of like the bubble in a spirit level. From that, the phone knows exactly how much it's tilted. When you aim the camera at something, that tilt is the angle of elevation (looking up) or depression (looking down).</p>
-      <p>Each time you tap, the app waits half a second so your tap doesn't shake the phone, then averages 1.5 seconds of readings (usually 60 to 90 of them). If your hand was too shaky, it asks you to try again. I got this idea from an open-source app called Basic Air Data Clinometer, which only locks a reading once the phone is steady.</p>
-      <p>Calibration works like a surveyor's trick called reversal. The phone's sensor is usually off by about half a degree to 2 degrees. The app measures with the back on a wall and then with the screen on the same spot. The wall's lean shows up once as plus and once as minus, so averaging the two cancels it. What's left is the sensor's own error, which then gets subtracted from every reading.</p>
-    </div>
-
-    <div class="panel">
-      <div class="eyebrow">Tips</div>
-      <h3>Getting a good answer</h3>
-      <ul class="tips">
-        <li><b>Calibrate first.</b> Most phone sensors are off by 0.5° to 2° from the factory. That's the biggest source of error.</li>
-        <li><b>Don't stand too far away.</b> If the angle to the bottom is tiny (under about 8°), even a small error changes the answer a lot. The app warns you when that happens.</li>
-        <li><b>For small things like a calendar,</b> stand 1.5 to 3 m from the wall, and between aims just tilt the phone without moving it up or down.</li>
-        <li><b>Measure your eye height properly.</b> In "No tape" mode the whole answer depends on it.</li>
-        <li><b>Stand about as far away as the building is tall.</b> Angles around 45° give the least error. Very steep or very flat angles make small mistakes bigger.</li>
-        <li><b>Tuck your elbows in</b> to keep the phone steady.</li>
-        <li><b>Zoom in</b> on far-away tops so the dot sits exactly on them.</li>
-        <li>Stand on <b>flat ground</b>, at the same level as the bottom of the building.</li>
-      </ul>
-      <p class="callout">What's the ± after the answer? Nobody's hand is perfectly still, and the sensor isn't perfect either. The app recalculates with each angle nudged a little up and down, and the ± is how much the height could be off by.</p>
-    </div>
   </section>
 
   <footer>Sightline · Building height calculator</footer>
@@ -550,7 +406,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
       <div id="ang">--.-°</div>
       <div id="angDir">Waiting for the sensor</div>
       <div class="steady"><div class="bar"><i id="steadyBar"></i></div><span id="steadyTxt">–</span></div>
-      <div class="fine" id="srcTxt" style="color:rgba(255,255,255,.5);font-size:11px"></div>
       <div class="pill" id="distHint" hidden></div>
     </div>
   </div>
@@ -579,7 +434,6 @@ footer{text-align:center;color:var(--mute);font-size:12px;padding:12px 0 24px}
       <div class="field"><label for="saveName">What did you measure?</label><div class="inp"><input id="saveName" type="text" placeholder="e.g. Office tower" style="font:500 16px var(--f-ui)"></div></div>
       <div class="row"><button class="btn primary" id="saveBtn" style="flex:1">Save</button><button class="btn" id="againBtn" style="flex:1">Add another try</button></div>
       <button class="btn ghost" id="freshBtn">Start fresh (forget these tries)</button>
-      <p class="fine">Tip: do 3 to 5 tries and use the average. Random wobbles cancel out a bit each time.</p>
     </div>
   </div></div>
 </div>
@@ -750,28 +604,25 @@ function wallFigure(sol){
 function renderSolution(el,sol,kind){
   if(!sol.ok){el.innerHTML=`<div class="msg">${sol.msg}</div>`;return}
   const angs=sol.keys.map(k=>`<div><span>${SYM[k]}</span><b>${f1(sol.ang[k])}°</b></div>`).join('');
-  const errNote=kind==='camera'
-    ?`The ± is how much the answer could be off by. It comes from how much your hand was shaking, plus the sensor's own limit (${calibrated()?'about 0.25° after calibrating':'about 1° without calibrating, so calibrate!'}).`
-    :'The ± shows how much the height changes if each angle is off by 1°, which is about how accurate a normal protractor is.';
   const wall=sol.mode==='wall',small=wall&&sol.H<1;
   const big=small?`${(sol.H*100).toFixed(1)}<span>cm</span>`:`${f2(sol.H)}<span>m</span>`;
   const pm=small?`± ${(sol.err*100).toFixed(1)} cm`:`± ${f2(sol.err)} m`;
   const far=kind==='camera'&&sol.err/sol.H>0.1
-    ?`<div class="msg">The ± is big compared to the answer. ${sol.keys.includes('dep')&&sol.ang.dep<8?'You were far away, so the angle to the bottom was tiny and small errors got blown up. Walk closer, or measure the distance and use "I know the distance".':'Try standing about as far away as the thing is tall, and calibrate first.'}</div>`:'';
+    ?`<div class="msg">The ± is big. ${sol.keys.includes('dep')&&sol.ang.dep<8?'You were too far away. Walk closer.':'Calibrate, and stand about as far away as it is tall.'}</div>`:'';
   el.innerHTML=`<div class="result">
     <div><div class="eyebrow">${wall?'Height of the object (PQ)':'Height of the building (AB)'}</div>
     <div class="res-head"><div class="res-big num">${big}</div>${sol.err?`<div class="res-err">${pm}</div>`:''}</div></div>
     ${far}
     <div class="meta"><div><span>Distance DE</span><b>${f2(sol.d)} m</b></div>${wall?`<div><span>Bottom above floor</span><b>${f2(sol.low)} m</b></div>`:''}<div><span>Eye height h</span><b>${f2(sol.h0)} m</b></div>${angs}</div>
     ${figure(sol)}
-    <div class="eyebrow">Working</div>
+    <details class="workbox"><summary>Show working</summary>
     <ol class="work">${sol.lines.map(([w,a,b])=>`<li><div><div class="w-t">${w},</div><div class="f">${a}</div><div class="s">${b}</div></div></li>`).join('')}</ol>
-    <p class="fine">${errNote}</p></div>`;
+    </details></div>`;
 }
 
 /* ---------- tabs ---------- */
 function showTab(t){
-  if(!['measure','calc','learn'].includes(t))t='measure';
+  if(!['measure','calc'].includes(t))t='measure';
   $$('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tab===t));
   $$('[data-view]').forEach(v=>v.hidden=v.dataset.view!==t);
   if(t==='calc')calc();
@@ -870,7 +721,7 @@ function beep(){
   if(navigator.vibrate)navigator.vibrate(200);
   try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=0.15;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+0.25)}catch(e){}
 }
-function calText(){$('#calStat').textContent=cal?`Done ✓ Your sensor was off by ${f2(Math.abs(cal.e))}° (reading too ${cal.e>0?'high':'low'}). That's fixed now.`:'Not done yet. Do this once, it fixes the biggest error.';$('#calBtn').textContent=cal?'Redo':'Calibrate'}
+function calText(){$('#calStat').textContent=cal?`Done ✓ Corrected by ${f2(Math.abs(cal.e))}°`:'Do this once for better answers.';$('#calBtn').textContent=cal?'Redo':'Calibrate'}
 $('#calBtn').onclick=()=>{$('#calPanel').hidden=!$('#calPanel').hidden};
 async function calRecord(i){
   await askMotionPermission();
@@ -919,7 +770,7 @@ $('#startBtn').onclick=async()=>{
 };
 async function checkSensorInVF(){
   $('#sensorErr').hidden=true;$('#angDir').textContent='Looking for the tilt sensor…';
-  if(await ensureSensors()){$('#srcTxt').textContent='sensor: '+sensorName;return}
+  if(await ensureSensors()){return}
   $('#sensorErrMsg').textContent=sensorHelp;
   $('#sensorDiag').textContent=diag.length?'Details: '+diag.join(' · '):'';
   $('#sensorErr').hidden=false;
@@ -1108,8 +959,8 @@ function bestSpot(sol,sig){
   // compare like with like: same angle error at both spots
   const now=errAt(sol.d),cm=sol.mode==='wall'&&sol.H<1;
   if(!isFinite(best.e))return '';
-  if(isFinite(now)&&!(now>best.e*1.3&&Math.abs(best.d-sol.d)/sol.d>0.2))return `<div class="msg ok">You stood in a good spot ✓ (DE ${f2(sol.d)} m). Moving wouldn't make the ± much smaller.</div>`;
-  return `<div class="msg tip">Best spot for this one: about <b>${f2(best.d)} m</b> away (you were ${f2(sol.d)} m). From there the ± would be about ${len(best.e,cm)} instead of ${len(isFinite(now)?now:sol.err,cm)}. ${sol.mode==='dist'?'Measure that distance with the tape and':'Stand there and'} tap "Add another try".</div>`;
+  if(isFinite(now)&&!(now>best.e*1.3&&Math.abs(best.d-sol.d)/sol.d>0.2))return `<div class="msg ok">Good spot ✓</div>`;
+  return `<div class="msg tip">For a better answer, stand about <b>${f2(best.d)} m</b> away (you were ${f2(sol.d)} m) and add another try.</div>`;
 }
 // several tries → mean and spread
 // a try that's way off from the others (moved the phone, aimed at the wrong spot) is left out
@@ -1132,8 +983,8 @@ function renderAvg(){
   el.innerHTML=`<div class="eyebrow">Average of ${st.n} tries</div>
     <div class="res-head"><div class="res-big num">${cm?(st.H*100).toFixed(1):f2(st.H)}<span>${cm?'cm':'m'}</span></div><div class="res-err">± ${u(st.err)}</div></div>
     <div class="tries">${st.all.map((x,i)=>`<div${x.out?' style="opacity:.5;text-decoration:line-through"':''}><span>Try ${i+1}${x.out?' (way off, left out)':''}</span>${u(x.H)}</div>`).join('')}</div>
-    ${st.dropped?`<p class="fine">${st.dropped>1?st.dropped+" tries were":"1 try was"} too far from the others, so it's not in the average. Probably the phone moved or the dot slipped.</p>`:''}
-    <p class="fine">Mean = (sum of tries) ÷ ${st.n}. The tries differ from each other by about ${u(st.sd)}. Averaging ${st.n} tries makes the ± about √${st.n} ≈ ${Math.sqrt(st.n).toFixed(1)} times smaller than a single try.</p>`;
+    ${st.dropped?`<p class="fine">Crossed-out tries were too far off, so they're not in the average.</p>`:''}
+`;
 }
 $('#againBtn').onclick=()=>{cam.step=0;cam.cap={};$('#sheet').hidden=true;renderStep()};
 $('#freshBtn').onclick=()=>{cam.runs=[];cam.step=0;cam.cap={};$('#saveName').value='';$('#sheet').hidden=true;renderStep()};
